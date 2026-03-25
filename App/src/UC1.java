@@ -1,92 +1,117 @@
 /**
- * Book My Stay App - Use Case 5
+ * Book My Stay App - Use Case 10
  * ------------------------------------------
- * Demonstrates booking request handling using Queue (FIFO).
+ * Demonstrates booking cancellation and inventory rollback
+ * using Stack (LIFO).
  *
  * @author Nikhilendra
- * @version 5.0
+ * @version 10.0
  */
 
 import java.util.*;
 
-// -------- Reservation Class --------
+// -------- Reservation --------
 class Reservation {
-    private String guestName;
-    private String roomType;
+    String reservationId;
+    String roomType;
+    String roomId;
 
-    public Reservation(String guestName, String roomType) {
-        this.guestName = guestName;
+    public Reservation(String reservationId, String roomType, String roomId) {
+        this.reservationId = reservationId;
         this.roomType = roomType;
-    }
-
-    public String getGuestName() {
-        return guestName;
-    }
-
-    public String getRoomType() {
-        return roomType;
-    }
-
-    public void display() {
-        System.out.println("Guest: " + guestName + " | Room: " + roomType);
+        this.roomId = roomId;
     }
 }
 
-// -------- Booking Queue --------
-class BookingQueue {
-    private Queue<Reservation> queue;
+// -------- Inventory --------
+class RoomInventory {
+    private HashMap<String, Integer> inventory = new HashMap<>();
 
-    public BookingQueue() {
-        queue = new LinkedList<>();
+    public RoomInventory() {
+        inventory.put("Single Room", 0);
+        inventory.put("Double Room", 1);
     }
 
-    // Add request (enqueue)
-    public void addRequest(Reservation r) {
-        queue.offer(r);
-        System.out.println("Request added for " + r.getGuestName());
+    public void increaseRoom(String type) {
+        inventory.put(type, inventory.getOrDefault(type, 0) + 1);
     }
 
-    // View all requests
-    public void displayQueue() {
-        System.out.println("\nCurrent Booking Queue:");
-
-        for (Reservation r : queue) {
-            r.display();
+    public void display() {
+        System.out.println("\nCurrent Inventory:");
+        for (String key : inventory.keySet()) {
+            System.out.println(key + " → " + inventory.get(key));
         }
     }
+}
 
-    // Get next request (FIFO)
-    public Reservation getNextRequest() {
-        return queue.peek(); // no removal (no allocation yet)
+// -------- Cancellation Service --------
+class CancellationService {
+
+    private Stack<String> rollbackStack = new Stack<>();
+    private HashMap<String, Reservation> confirmedBookings = new HashMap<>();
+
+    // Add confirmed booking (simulate previous step)
+    public void addBooking(Reservation r) {
+        confirmedBookings.put(r.reservationId, r);
+    }
+
+    // Cancel booking
+    public void cancel(String reservationId, RoomInventory inventory) {
+
+        System.out.println("\nCancelling Reservation: " + reservationId);
+
+        // Validate existence
+        if (!confirmedBookings.containsKey(reservationId)) {
+            System.out.println("Error: Reservation not found!");
+            return;
+        }
+
+        Reservation r = confirmedBookings.get(reservationId);
+
+        // Push to rollback stack
+        rollbackStack.push(r.roomId);
+
+        // Restore inventory
+        inventory.increaseRoom(r.roomType);
+
+        // Remove booking
+        confirmedBookings.remove(reservationId);
+
+        System.out.println("Cancellation Successful!");
+        System.out.println("Released Room ID: " + r.roomId);
+    }
+
+    public void showRollbackStack() {
+        System.out.println("\nRollback Stack (LIFO): " + rollbackStack);
     }
 }
 
 // -------- Main Class --------
-public class UC5 {
+public class UC10 {
 
     public static void main(String[] args) {
 
         System.out.println("=======================================");
-        System.out.println("   Book My Stay App - Version 5.0      ");
+        System.out.println("   Book My Stay App - Version 10.0     ");
         System.out.println("=======================================\n");
 
-        BookingQueue bookingQueue = new BookingQueue();
+        RoomInventory inventory = new RoomInventory();
+        CancellationService service = new CancellationService();
 
-        // Guests send booking requests
-        bookingQueue.addRequest(new Reservation("Nikhil", "Single Room"));
-        bookingQueue.addRequest(new Reservation("Rahul", "Double Room"));
-        bookingQueue.addRequest(new Reservation("Anjali", "Suite Room"));
+        // Simulate confirmed bookings
+        service.addBooking(new Reservation("RES-101", "Single Room", "SI-1234"));
+        service.addBooking(new Reservation("RES-102", "Double Room", "DO-5678"));
 
-        // Display queue (FIFO order)
-        bookingQueue.displayQueue();
+        // Cancel bookings
+        service.cancel("RES-101", inventory);
+        service.cancel("RES-999", inventory); // invalid
 
-        // Show next request (without removing)
-        System.out.println("\nNext Request to Process:");
-        Reservation next = bookingQueue.getNextRequest();
-        if (next != null) {
-            next.display();
-        }
+        // Show updated inventory
+        inventory.display();
 
-        System.out.println("\nAll requests stored in arrival order!");
+        // Show rollback stack
+        service.showRollbackStack();
+
+        System.out.println("\nSystem rollback handled successfully!");
     }
 }
