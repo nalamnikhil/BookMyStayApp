@@ -1,26 +1,25 @@
 /**
- * Book My Stay App - Use Case 5
+ * Book My Stay App - Use Case 8
  * ------------------------------------------
- * Demonstrates booking request handling using Queue (FIFO).
+ * Demonstrates booking history tracking and reporting
+ * using List and reporting service.
  *
  * @author Nikhilendra
- * @version 5.0
+ * @version 8.0
  */
 
 import java.util.*;
 
-// -------- Reservation Class --------
+// -------- Reservation --------
 class Reservation {
+    private String reservationId;
     private String guestName;
     private String roomType;
 
-    public Reservation(String guestName, String roomType) {
+    public Reservation(String reservationId, String guestName, String roomType) {
+        this.reservationId = reservationId;
         this.guestName = guestName;
         this.roomType = roomType;
-    }
-
-    public String getGuestName() {
-        return guestName;
     }
 
     public String getRoomType() {
@@ -28,65 +27,77 @@ class Reservation {
     }
 
     public void display() {
-        System.out.println("Guest: " + guestName + " | Room: " + roomType);
+        System.out.println("ID: " + reservationId +
+                " | Guest: " + guestName +
+                " | Room: " + roomType);
     }
 }
 
-// -------- Booking Queue --------
-class BookingQueue {
-    private Queue<Reservation> queue;
+// -------- Booking History --------
+class BookingHistory {
+    private List<Reservation> history = new ArrayList<>();
 
-    public BookingQueue() {
-        queue = new LinkedList<>();
+    // Add confirmed booking
+    public void addReservation(Reservation r) {
+        history.add(r);
     }
 
-    // Add request (enqueue)
-    public void addRequest(Reservation r) {
-        queue.offer(r);
-        System.out.println("Request added for " + r.getGuestName());
+    // Get all bookings
+    public List<Reservation> getAllBookings() {
+        return history;
     }
+}
 
-    // View all requests
-    public void displayQueue() {
-        System.out.println("\nCurrent Booking Queue:");
+// -------- Report Service --------
+class BookingReportService {
 
-        for (Reservation r : queue) {
+    // Display all bookings
+    public void showAllBookings(List<Reservation> list) {
+        System.out.println("\nAll Booking History:");
+        for (Reservation r : list) {
             r.display();
         }
     }
 
-    // Get next request (FIFO)
-    public Reservation getNextRequest() {
-        return queue.peek(); // no removal (no allocation yet)
+    // Generate summary report
+    public void generateSummary(List<Reservation> list) {
+        HashMap<String, Integer> countMap = new HashMap<>();
+
+        for (Reservation r : list) {
+            String type = r.getRoomType();
+            countMap.put(type, countMap.getOrDefault(type, 0) + 1);
+        }
+
+        System.out.println("\nBooking Summary Report:");
+        for (String type : countMap.keySet()) {
+            System.out.println(type + " → " + countMap.get(type) + " bookings");
+        }
     }
 }
 
 // -------- Main Class --------
-public class UC5 {
+public class UC8 {
 
     public static void main(String[] args) {
 
         System.out.println("=======================================");
-        System.out.println("   Book My Stay App - Version 5.0      ");
+        System.out.println("   Book My Stay App - Version 8.0      ");
         System.out.println("=======================================\n");
 
-        BookingQueue bookingQueue = new BookingQueue();
+        BookingHistory history = new BookingHistory();
+        BookingReportService report = new BookingReportService();
 
-        // Guests send booking requests
-        bookingQueue.addRequest(new Reservation("Nikhil", "Single Room"));
-        bookingQueue.addRequest(new Reservation("Rahul", "Double Room"));
-        bookingQueue.addRequest(new Reservation("Anjali", "Suite Room"));
+        // Add confirmed bookings
+        history.addReservation(new Reservation("RES-101", "Nikhil", "Single Room"));
+        history.addReservation(new Reservation("RES-102", "Rahul", "Double Room"));
+        history.addReservation(new Reservation("RES-103", "Anjali", "Single Room"));
 
-        // Display queue (FIFO order)
-        bookingQueue.displayQueue();
+        // Show history
+        report.showAllBookings(history.getAllBookings());
 
-        // Show next request (without removing)
-        System.out.println("\nNext Request to Process:");
-        Reservation next = bookingQueue.getNextRequest();
-        if (next != null) {
-            next.display();
-        }
+        // Generate report
+        report.generateSummary(history.getAllBookings());
 
-        System.out.println("\nAll requests stored in arrival order!");
+        System.out.println("\nReporting completed successfully!");
     }
 }
