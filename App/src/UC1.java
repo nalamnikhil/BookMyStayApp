@@ -1,80 +1,92 @@
-abstract class Room {
-    protected int beds;
-    protected double price;
-    protected String type;
+/**
+ * Book My Stay App - Use Case 5
+ * ------------------------------------------
+ * Demonstrates booking request handling using Queue (FIFO).
+ *
+ * @author Nikhilendra
+ * @version 5.0
+ */
 
-    public Room(String type, int beds, double price) {
-        this.type = type;
-        this.beds = beds;
-        this.price = price;
+import java.util.*;
+
+// -------- Reservation Class --------
+class Reservation {
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
     }
 
-    // Abstract method
-    public abstract void displayDetails();
-}
-
-// Single Room
-class SingleRoom extends Room {
-    public SingleRoom() {
-        super("Single Room", 1, 1000);
+    public String getGuestName() {
+        return guestName;
     }
 
-    public void displayDetails() {
-        System.out.println(type + " | Beds: " + beds + " | Price: ₹" + price);
-    }
-}
-
-// Double Room
-class DoubleRoom extends Room {
-    public DoubleRoom() {
-        super("Double Room", 2, 2000);
+    public String getRoomType() {
+        return roomType;
     }
 
-    public void displayDetails() {
-        System.out.println(type + " | Beds: " + beds + " | Price: ₹" + price);
+    public void display() {
+        System.out.println("Guest: " + guestName + " | Room: " + roomType);
     }
 }
 
-// Suite Room
-class SuiteRoom extends Room {
-    public SuiteRoom() {
-        super("Suite Room", 3, 5000);
+// -------- Booking Queue --------
+class BookingQueue {
+    private Queue<Reservation> queue;
+
+    public BookingQueue() {
+        queue = new LinkedList<>();
     }
 
-    public void displayDetails() {
-        System.out.println(type + " | Beds: " + beds + " | Price: ₹" + price);
+    // Add request (enqueue)
+    public void addRequest(Reservation r) {
+        queue.offer(r);
+        System.out.println("Request added for " + r.getGuestName());
+    }
+
+    // View all requests
+    public void displayQueue() {
+        System.out.println("\nCurrent Booking Queue:");
+
+        for (Reservation r : queue) {
+            r.display();
+        }
+    }
+
+    // Get next request (FIFO)
+    public Reservation getNextRequest() {
+        return queue.peek(); // no removal (no allocation yet)
     }
 }
 
-// Main Class
-public class UC2 {
+// -------- Main Class --------
+public class UC5 {
 
     public static void main(String[] args) {
 
         System.out.println("=======================================");
-        System.out.println("   Book My Stay App - Version 2.1      ");
+        System.out.println("   Book My Stay App - Version 5.0      ");
         System.out.println("=======================================\n");
 
-        // Creating objects (Polymorphism)
-        Room r1 = new SingleRoom();
-        Room r2 = new DoubleRoom();
-        Room r3 = new SuiteRoom();
+        BookingQueue bookingQueue = new BookingQueue();
 
-        // Static availability variables
-        boolean singleAvailable = true;
-        boolean doubleAvailable = false;
-        boolean suiteAvailable = true;
+        // Guests send booking requests
+        bookingQueue.addRequest(new Reservation("Nikhil", "Single Room"));
+        bookingQueue.addRequest(new Reservation("Rahul", "Double Room"));
+        bookingQueue.addRequest(new Reservation("Anjali", "Suite Room"));
 
-        // Display details
-        r1.displayDetails();
-        System.out.println("Available: " + singleAvailable + "\n");
+        // Display queue (FIFO order)
+        bookingQueue.displayQueue();
 
-        r2.displayDetails();
-        System.out.println("Available: " + doubleAvailable + "\n");
+        // Show next request (without removing)
+        System.out.println("\nNext Request to Process:");
+        Reservation next = bookingQueue.getNextRequest();
+        if (next != null) {
+            next.display();
+        }
 
-        r3.displayDetails();
-        System.out.println("Available: " + suiteAvailable + "\n");
-
-        System.out.println("Application executed successfully!");
+        System.out.println("\nAll requests stored in arrival order!");
     }
 }
